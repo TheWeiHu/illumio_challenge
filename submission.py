@@ -6,11 +6,11 @@ import math
 class Firewall:
     def __init__(self, path_to_csv):
         self.rules = initialize_rules()
-        for direction, protocol, ports, addresses in rules_generator(path_to_csv):
-            parsed_addresses = tuple(parse_ip_address(adr) for adr in addresses)
-            for i in range(int(ports[0]), int(ports[1]) + 1):
+        for direction, protocol, (start, end), addresses in rules_generator(path_to_csv):
+            parsed_addresses = tuple(map(parse_ip_address, addresses))
+            for port in range(int(start), int(end) + 1):
                 # We're assuming there are no duplicated / overlapping rules.
-                bisect.insort(self.rules[(direction, protocol)][i], parsed_addresses)
+                bisect.insort(self.rules[(direction, protocol)][port], parsed_addresses)
 
     def accept_packet(self, direction, protocol, port, ip_address):
         accepted_ip_addresses = self.rules[(direction, protocol)][port]
@@ -56,7 +56,7 @@ def parse_ip_address(ip_address):
     Converts string representation of an ip address into a tuple, so that it becomes
     comparable.
     """
-    return tuple(int(num) for num in ip_address.split("."))
+    return tuple(map(int, ip_address.split(".")))
 
 
 def binary_search_ip(accepted_addresses, address):
